@@ -5,13 +5,22 @@ class Complex {
     this.b = b;
   }
 
-  nextIteration() {
+  add(complex) {
+    this.a += complex.a;
+    this.b += complex.b;
+    return this;
+  }
+
+  square() {
     //z² = (a + bi)² = (a + bi)(a + bi)
     //= a² + 2abi + (bi)²
     //= a² + 2abi - b²
     //= a² - b² + (2ab)i
-    this.a = this.a ** 2 - this.b ** 2;
-    this.b = 2 * this.a * this.b;
+    let a = this.a;
+    let b = this.b;
+    this.a = a ** 2 - b ** 2;
+    this.b = 2 * a * b;
+    return this;
   }
 
   length() {
@@ -19,22 +28,17 @@ class Complex {
   }
 }
 
-var tmpa;
-var tmpb;
-var ca;
-var cb;
+var c = new Complex();
+var z = new Complex();
 var x;
 var y;
 var zoomx = 1.5;
 var zoomy = 1.5;
-var dx = 0;
+var dx = -0.7402597402597404;
 var dy = 0;
-var a;
-var b;
 var iteration;
-const maxLength = 2;
-const maxIterations = 100;
-//const canvas = { width: window.innerWidth, height: window.innerHeight };
+var maxIterations = 50;
+var ratioChange = 0.1;
 const width = window.innerHeight;
 const height = window.innerHeight;
 var colr, colv, colb;
@@ -49,30 +53,48 @@ function draw() {
 
   for (x = 0; x < width; x++) {
     for (y = 0; y < height; y++) {
-      a = map(x, 0, width, -zoomx + dx, zoomx + dx);
-      b = map(y, 0, height, -zoomy + dy, zoomy + dy);
-      ca = a;
-      cb = b;
+      c.a = map(x, 0, width, -zoomx + dx, zoomx + dx);
+      c.b = map(y, 0, height, -zoomy + dy, zoomy + dy);
+      z.a = 0;
+      z.b = 0;
       iteration = 0;
       r = 255;
       while (iteration < maxIterations) {
-        tmpa = a;
-        tmpb = b;
-        a = tmpa * tmpa - tmpb * tmpb + ca;
-        b = 2 * tmpa * tmpb + cb;
-        if (Math.abs(a + b) > 2900) {
+        z.square().add(c);
+        if (Math.abs(z.a + z.b) > 2900) {
           break;
         }
         iteration++;
       }
-      colr = map(iteration, 0, maxIterations, 0, 255);
-      if (iteration === maxIterations) {
+
+      if (iteration >= maxIterations) {
         colr = 0;
+        colv = 0;
+        colb = 0;
+      } else {
+        if (iteration >= (2 * maxIterations) / 3) {
+          colr = map(iteration, 0, maxIterations, 200, 255);
+          colv = map(iteration, 0, maxIterations, 100, 150);
+          colb = map(iteration, 0, maxIterations, 0, 50);
+        }
+        if (
+          iteration < (2 * maxIterations) / 3 &&
+          iteration >= maxIterations / 3
+        ) {
+          colr = map(iteration, 0, maxIterations, 100, 150);
+          colv = map(iteration, 0, maxIterations, 0, 255);
+          colb = map(iteration, 0, maxIterations, 100, 150);
+        }
+        if (iteration < maxIterations / 3) {
+          colr = map(iteration, 0, maxIterations, 0, 50);
+          colv = map(iteration, 0, maxIterations, 100, 150);
+          colb = map(iteration, 0, maxIterations, 200, 255);
+        }
       }
       var pix = (x + y * width) * 4;
       pixels[pix + 0] = colr;
-      pixels[pix + 1] = Math.abs(a + b) % 255;
-      pixels[pix + 2] = Math.sqrt(a * a + b * b) % 255;
+      pixels[pix + 1] = colv; //Math.abs(z.a + z.b) % 255;
+      pixels[pix + 2] = colb; //Math.sqrt(z.a * z.a + z.b * z.b) % 255;
       pixels[pix + 3] = 255;
     }
   }
@@ -94,6 +116,12 @@ function keyPressed() {
   } else if (keyCode === DOWN_ARROW) {
     zoomx += zoomx / 10.0;
     zoomy += zoomy / 10.0;
+  } else if (keyCode === LEFT_ARROW) {
+    if (maxIterations > 10) {
+      maxIterations -= Math.floor(maxIterations * ratioChange);
+    }
+  } else if (keyCode === RIGHT_ARROW) {
+    maxIterations += Math.floor(maxIterations * ratioChange);
   }
-  console.log(zoomx, zoomy);
+  console.log(zoomx + dx, zoomy + dy, maxIterations);
 }
