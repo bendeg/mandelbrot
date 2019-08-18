@@ -1,4 +1,4 @@
-# mandelbrot
+# mandelbrot (Javascript)
 
 mouse click : center the clicked point
 
